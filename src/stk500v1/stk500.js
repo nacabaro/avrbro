@@ -30,6 +30,17 @@ export const sync = async (serial, attempts, {timeout, debug}) => {
   throw new Error(`Sync failed after ${attempts} attempts`)
 }
 
+const checkIfSignatureMatchesOneOfTheMicrosOnTheList = (receivedData) => {
+  const signature328p = [0x1e, 0x95, 0x0f]
+  const signature328pb = [0x1e, 0x95, 0x16]
+
+  let receivedSignature = receivedData.slice(1, -1);
+  const is328p = signature328p.length === receivedSignature.length && signature328p.every((val, index) => val === receivedSignature[index]);
+  const is328pb = signature328pb.length === receivedSignature.length && signature328pb.every((val, index) => val === receivedSignature[index]);
+
+  return is328p || is328pb;
+}
+
 const verifySignature = async (serial, signature, {timeout, debug}) => {
   debug && console.log('verify signature')
 
@@ -287,7 +298,8 @@ export const bootload = async (serial, hex, opt) => {
     await sync(serial, 3, opt)
     await sync(serial, 3, opt)
     const sign = Buffer.from(opt.signature)
-    await verifySignature(serial, sign, opt)
+    const signature = await verifySignature(serial, sign, opt)
+    if (!checkIfSignatureMatchesOneOfTheMicrosOnTheList(signature)) return false;    
     await setOptions(serial, parameters, opt)
     await enterProgrammingMode(serial, opt)
     await upload(serial, hex, opt)
@@ -297,4 +309,19 @@ export const bootload = async (serial, hex, opt) => {
     throw err
   }
   return true
+}
+
+export const getAVRSignature = async (serial) => {
+  const opts = {
+    timeout: 5000,
+    debug: true
+  }
+  
+  await sync(serial, 3, opts)
+  await sync(serial, 3, opts)
+  await sync(serial, 3, opts)
+  const receivedData = await getSignature(serial, opts);
+  let receivedSignature = receivedData.slice(1, -1);
+
+  return receivedSignature;
 }

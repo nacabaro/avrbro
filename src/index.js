@@ -1,6 +1,6 @@
 import * as boardsHelper from './boards'
 import { parseIntelHex } from './hex-parser'
-import { bootload } from './stk500v1/stk500'
+import { bootload, getAVRSignature } from './stk500v1/stk500'
 
 /**
 * Checks if the serial api is available
@@ -96,6 +96,11 @@ const flash = async (serial, hexData, options) => {
   }
 }
 
+const getBootloaderSignature = async (serial) => {
+  await reset(serial);
+  return await getAVRSignature(serial);
+}
+
 const avrbro = {
   isAvailable,
   openSerial,
@@ -103,6 +108,7 @@ const avrbro = {
   parseHex,
   flash,
   reset,
+  getBootloaderSignature,
   boardsHelper
 }
 
