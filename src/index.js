@@ -45,6 +45,29 @@ const openSerial = async (options = {}) => {
 }
 
 /**
+* Open a serial port previously connected
+*/
+const reopenSerial = async (options = {}) => {
+  const {
+    baudRate = 57600,
+  } = options
+
+  try {
+    const ports = await navigator.serial.getPorts()
+    console.log(ports)
+    const port = ports[0]
+    console.log(port)
+    await port.open({ baudRate })
+    const reader = port.readable.getReader()
+    const writer = port.writable.getWriter()
+    return {port, reader, writer}
+  } catch (e) {
+    console.log(e)
+  }
+  return null
+}
+
+/**
 * Close the connection with the serial port
 */
 const closeSerial = async ({port, reader, writer}) => {
@@ -87,6 +110,7 @@ const flash = async (serial, hexData, options) => {
   }
   try {
     await reset(serial)
+    delay(100);
     const flashResult = await bootload(serial, hexData, props)
     debug && console.log(`flash complete successfully`)
     return flashResult
@@ -98,6 +122,7 @@ const flash = async (serial, hexData, options) => {
 
 const getBootloaderSignature = async (serial) => {
   await reset(serial);
+  await delay(50);
   return await getAVRSignature(serial);
 }
 
@@ -109,7 +134,10 @@ const avrbro = {
   flash,
   reset,
   getBootloaderSignature,
+  reopenSerial,
   boardsHelper
 }
+
+const delay = (ms) => { return new Promise((resolve, reject) => setTimeout(resolve, ms))}
 
 export default avrbro

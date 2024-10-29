@@ -313,13 +313,13 @@ export const bootload = async (serial, hex, opt) => {
 
 export const getAVRSignature = async (serial) => {
   const opts = {
-    timeout: 5000,
+    timeout: 30000,
     debug: true
   }
   
+  /*await sync(serial, 3, opts)
   await sync(serial, 3, opts)
-  await sync(serial, 3, opts)
-  await sync(serial, 3, opts)
+  await sync(serial, 3, opts)*/
   const receivedData = await getSignature(serial, opts);
   let receivedSignature = receivedData.slice(1, -1);
 
